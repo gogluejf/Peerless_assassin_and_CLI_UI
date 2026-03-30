@@ -74,18 +74,17 @@ if [ ! -f "$VENV_DIR/bin/python" ]; then
   exit 1
 fi
 
-# Create udev rule
+# Create/update udev rule
 UDEV_RULE_FILE="/etc/udev/rules.d/70-digital-thermal-right-lcd.rules"
-if [ ! -f "$UDEV_RULE_FILE" ]; then
-  echo "Creating udev rule at $UDEV_RULE_FILE"
-  echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="0416", ATTRS{idProduct}=="8001", MODE="0666"' > "$UDEV_RULE_FILE"
-  echo 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0416", ATTRS{idProduct}=="8001", TAG+="uaccess"' >> "$UDEV_RULE_FILE"
-  udevadm control --reload-rules
-  udevadm trigger
-  echo "udev rule created."
-else
-  echo "udev rule already exists."
-fi
+
+echo "Writing udev rule to $UDEV_RULE_FILE"
+cat > "$UDEV_RULE_FILE" <<'EOF'
+KERNEL=="hidraw*", ATTRS{idVendor}=="0416", ATTRS{idProduct}=="8001", MODE="0666"
+EOF
+
+udevadm control --reload-rules
+udevadm trigger
+echo "udev rule updated."
 
 # Create systemd service
 SERVICE_FILE="/etc/systemd/system/digital-thermal-right-lcd.service"
